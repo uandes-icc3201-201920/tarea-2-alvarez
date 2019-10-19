@@ -15,6 +15,8 @@ how to use the page table and disk interfaces.
 #include <string.h>
 #include <errno.h>
 
+#include <signal.h>
+
 int page_fault_counter = 0;
 int page_swaps = 0;
 int read_counter = 0;
@@ -177,7 +179,7 @@ int main( int argc, char *argv[] )
 	printf("Page count: %d\n", page_counter);
 	printf("Frame count: %d\n", frame_counter);
 	printf("Swapping method: %s\n", run_method);
-	printf("Memory pattern: %s\n", program);
+	printf("Memory pattern: %s\n", pattern);
 
 	struct disk *disk = disk_open("myvirtualdisk", page_counter);
 	if(!disk) {
@@ -186,15 +188,15 @@ int main( int argc, char *argv[] )
 	}
 
 
-	struct page_table *pt = page_table_create(page_counter, frame_counter, page_fault_handler);
-	if(!pt) {
+	struct page_table *page_table = page_table_create(page_counter, frame_counter, page_fault_handler);
+	if(!page_table) {
 		fprintf(stderr,"couldn't create page table: %s\n",strerror(errno));
 		return 1;
 	}
 
-	char *virtmem = page_table_get_virtmem(pt);
+	char *virtmem = page_table_get_virtmem(page_table);
 
-	char *physmem = page_table_get_physmem(pt);
+	char *physmem = page_table_get_physmem(page_table);
 
 	if(!strcmp(pattern,"pattern1")) {
 		access_pattern1(virtmem,page_counter*PAGE_SIZE);
