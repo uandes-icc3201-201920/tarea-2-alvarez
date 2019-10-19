@@ -15,10 +15,134 @@ how to use the page table and disk interfaces.
 #include <string.h>
 #include <errno.h>
 
+int page_fault_counter = 0;
+int pager_swaps = 0;
+int read_counter = 0;
+int write_counter = 0;
+
+int *page_counter = 0;
+int *frame_counter = 0;
+
+char *run_method;
+
+char *virtmem;
+char *physmem;
+
+int *fifo_entries = NULL;
+int first_in = 0;
+
+int *frame_table = NULL;
+int *frame_table_bit = NULL;
+
+struct disk *disk;
+
+
+void RAND_method(struct page_table *page_table, int page, int frame, int bits){
+	srand(0); 
+	int random_frame = rand() % frame_counter;
+	int frame_available	= -1;
+	for (int i = 0;i <= frame_counter; i++){/
+		if (frame_table_bit[i] == 0){
+			frame_available = i;
+			break;
+		}
+	}
+	if (frame_available == -1){
+		bits = PROT_READ;
+		
+		write_counter++;
+		disk_write(disk, frame_table[random_frame], &physmem[random_frame*PAGE_SIZE]);
+		
+		page_table_set_entry(page_table, frame_table[random_frame], random_frame, 0); 
+		
+		read_counter++;
+		disk_read(disk, page, &physmem[random_frame*PAGE_SIZE]);
+		
+		frame_table[random_frame] = page;
+		frame_table_bit[random_frame] = bits;
+
+		page_table_set_entry(page_table, page, random_frame, bits);
+	
+	}
+	else{
+		read_counter++;
+		bits = PROT_READ;
+
+		disk_read(disk, page, &physmem[frame_available*PAGE_SIZE]);
+		frame_table[frame] = page;
+		frame_table_bit[frame] = bits;
+
+		page_table_set_entry(page_table, page, frame_available, bits);
+		
+	}
+}
+
+
+void FIFO_method(struct page_table *page_table, int page, int frame, int bits){
+	int frame_available	= -1;
+	for (int i = 0;i <= frame_counter; i++){/
+		if (frame_table_bit[i] == 0){
+			frame_available = i;
+			break;
+		}
+	}
+	if (frame_available == -1){
+		write_counter++;
+		disk_write(disk, frame_table[first_in], &physmem[first_in*PAGE_SIZE]);
+		
+		page_table_set_entry(page_table, frame_table[first_in], first_in, 0);
+
+		read_counter++;
+		disk_read(disk, page, &physmem[first_in*PAGE_SIZE]);
+		frame_table[frame] = page;
+		frame_table_bit[frame] = bits;
+
+		page_table_set_entry(page_table, page, first_in, bits);
+
+		if(first_in == frame_counter){
+			first_in = 0;
+		}
+		else{
+			first_in++;
+		}
+	}
+	else{
+		read_counter++;
+		bits = PROT_READ;
+
+		disk_read(disk, page, &physmem[frame_available*PAGE_SIZE]);
+		frame_table[frame] = page;
+		frame_table_bit[frame] = bits;
+
+		page_table_set_entry(page_table, page, frame_available, bits);
+		
+	}
+}
+
+
+
 void page_fault_handler( struct page_table *pt, int page )
 {
 	printf("page fault on page #%d\n",page);
-	exit(1);
+
+	page_fault_counter++;
+	int frame,bits;
+	page_table_get_entry(pt, page, &frame, &bits);
+
+	if(bits == 0){
+		page_fault_counter++;
+	}
+	
+	if (!strcmp(run_method,"fifo")){
+		FIFO_method(pt,page,frame,bits);
+	}
+	else if (!strcmp(run_method,"rand")){
+		RAND_method(pt,page,frame,bits);
+	}
+	else{
+		printf("Policy not found.");
+		exit(1);
+	}
 }
 
 int main( int argc, char *argv[] )

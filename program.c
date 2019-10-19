@@ -26,8 +26,9 @@ static int compare_bytes( const void *pa, const void *pb )
 void access_pattern1( char *data, int length )
 {
 	// TODO: Implementar
-	for (int i = 0; i < length; i++) {
-	data[i] = 0;
+	for (int i = 0; i < length; i++) 
+	{
+		data[i] = 0;
 	}
 }
 
