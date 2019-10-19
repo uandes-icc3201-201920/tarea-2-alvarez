@@ -37,7 +37,7 @@ int *frame_table_bit = NULL;
 struct disk *disk;
 
 
-void RAND_method(struct page_table *page_table, int page, int frame, int bits){
+void random_method(struct page_table *page_table, int page, int frame, int bits){
 	srand(0); 
 	int random_frame = rand() % frame_counter;
 	int frame_available	= -1;
@@ -78,7 +78,7 @@ void RAND_method(struct page_table *page_table, int page, int frame, int bits){
 }
 
 
-void FIFO_method(struct page_table *page_table, int page, int frame, int bits){
+void fifo_method(struct page_table *page_table, int page, int frame, int bits){
 	int frame_available	= -1;
 	for (int i = 0;i <= frame_counter; i++){/
 		if (frame_table_bit[i] == 0){
