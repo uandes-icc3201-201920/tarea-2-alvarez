@@ -28,16 +28,30 @@ void access_pattern1( char *data, int length )
 	// TODO: Implementar
 	for (int i = 0; i < length; i++) 
 	{
-		data[i] = 0;
+		data[i]++;
 	}
 }
 
 void access_pattern2( char *data, int length )
 {
 	// TODO: Implementar
+	for (int i = 0; i < length; i++)
+	{
+		int random_number = rand()%length;
+		data[random_number]--;
+	}
 }
 
 void access_pattern3( char *cdata, int length )
 {
 	// TODO: Implementar
+	for (int i = 0; i < length; i++) 
+	{
+		if(i < length/2){
+			data[i]++;
+		}
+		else{
+			data[length - (i+1)]--;
+		}
+	}
 }

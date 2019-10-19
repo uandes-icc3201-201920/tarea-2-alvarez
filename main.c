@@ -40,7 +40,6 @@ struct disk *disk;
 
 
 void random_method(struct page_table *page_table, int page, int frame, int bits){
-	srand(0); 
 	int random_frame = rand() % frame_counter;
 	int frame_available	= -1;
 
@@ -70,9 +69,9 @@ void random_method(struct page_table *page_table, int page, int frame, int bits)
 	}
 
 	else{
-		read_counter++;
 		bits = PROT_READ;
 
+		read_counter++;
 		disk_read(disk, page, &physmem[frame_available*PAGE_SIZE]);
 		frame_table[frame] = page;
 		frame_table_bit[frame] = bits;
@@ -112,9 +111,9 @@ void fifo_method(struct page_table *page_table, int page, int frame, int bits){
 		}
 	}
 	else{
-		read_counter++;
 		bits = PROT_READ;
 
+		read_counter++;
 		disk_read(disk, page, &physmem[frame_available*PAGE_SIZE]);
 		frame_table[frame] = page;
 		frame_table_bit[frame] = bits;
@@ -128,15 +127,15 @@ void fifo_method(struct page_table *page_table, int page, int frame, int bits){
 
 void page_fault_handler( struct page_table *page_table, int page )
 {
-	printf("page fault on page #%d\n",page);
+	printf("page fault on page #%d\n", page);
 
 	page_fault_counter++;
-	int frame,bits;
-	page_table_get_entry(page_table, page, &frame, &bits);
+	int frame;
+	int bits;
+
 
 	if(bits == 0){
-		page_fault_counter++;
-	
+		page_swaps++;
 		if (!strcmp(run_method,"fifo")){
 			fifo_method(page_table, page, frame, bits);
 		}
@@ -211,6 +210,9 @@ int main( int argc, char *argv[] )
 		fprintf(stderr,"unknown program: %s\n",argv[3]);
 
 	}
+
+	printf("Pages fault count: %d\n", page_fault_counter);
+	printf("Page swaps %d\n", page_swaps);
 
 
 	free(frame_table);
